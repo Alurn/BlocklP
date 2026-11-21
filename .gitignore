@@ -1,0 +1,10 @@
+# Local secrets, planning & cache
+.env
+.cache/
+PLAN.md
+
+# Temp files & OS artifacts
+*.tmp
+*.bak
+.DS_Store
+__pycache__/

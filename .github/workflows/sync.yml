@@ -1,0 +1,56 @@
+name: Sync AbuseIPDB Blocklist
+
+on:
+  schedule:
+    # Run every 6 hours at :26 (00:26, 06:26, 12:26, 18:26 UTC) = 4 times/day
+    # Leaves 1 request/day buffer within AbuseIPDB free tier (5/day); HTTP 429 skips safely without clearing lists
+    - cron: "26 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-blocklist
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Fetch and archive daily IPv4 blocklist
+        id: fetch
+        env:
+          ABUSEIPDB_TOKEN: ${{ secrets.ABUSEIPDB_TOKEN }}
+        run: |
+          chmod +x scripts/fetch.sh scripts/aggregate.sh
+          ./scripts/fetch.sh --force
+
+      - name: Aggregate 1d / 7d / 30d blocklists & update README
+        if: steps.fetch.outputs.skipped != 'true'
+        run: ./scripts/aggregate.sh
+
+      - name: Squash and force-push changes
+        if: steps.fetch.outputs.skipped != 'true'
+        run: |
+          if [[ -z "$(git status --porcelain)" ]]; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          BRANCH="${GITHUB_REF_NAME:-main}"
+          UTC_NOW="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          git commit -m "update"
+          NEW_COMMIT="$(git commit-tree 'HEAD^{tree}' -m "chore: sync blocklist (${UTC_NOW})")"
+          git reset "$NEW_COMMIT"
+          git push --force origin "HEAD:${BRANCH}"

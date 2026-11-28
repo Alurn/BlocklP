@@ -1,0 +1,29 @@
+# Whitelist (Supports single IPv4 or CIDR notation, inline # comments allowed)
+# Default entries: Common Public DNS Resolvers
+
+# Cloudflare DNS
+1.1.1.1
+1.0.0.1
+
+# Google Public DNS
+8.8.8.8
+8.8.4.4
+
+# Quad9 DNS
+9.9.9.9
+149.112.112.112
+
+# HiNet DNS
+168.95.1.1
+168.95.192.1
+
+# OpenDNS
+208.67.222.222
+208.67.220.220
+
+# AdGuard DNS
+94.140.14.14
+94.140.15.15
+
+# --- Custom Excluded IPs / CIDRs ---
+# Add your own server IPs, monitoring nodes, or trusted networks below:
